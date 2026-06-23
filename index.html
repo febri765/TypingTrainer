@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⌨️ Typing Trainer</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI,sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#0f172a,#4c1d95);
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+color:white;
+transition:0.3s;
+}
+
+.container{
+width:100%;
+max-width:850px;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(15px);
+padding:20px;
+border-radius:20px;
+box-shadow:0 10px 40px rgba(0,0,0,0.4);
+transition:0.3s;
+}
+
+h1{
+text-align:center;
+margin-bottom:10px;
+}
+
+#themeBtn{
+width:100%;
+padding:10px;
+border:none;
+border-radius:10px;
+margin-bottom:10px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.stats{
+display:flex;
+justify-content:space-between;
+font-size:14px;
+margin-bottom:10px;
+}
+
+.text{
+background:rgba(0,0,0,0.25);
+padding:15px;
+border-radius:12px;
+font-size:22px;
+min-height:120px;
+line-height:1.8;
+}
+
+.correct{color:#22c55e;}
+.wrong{color:#ef4444;}
+.current{background:white;color:black;border-radius:4px;}
+
+textarea{
+width:100%;
+margin-top:15px;
+height:120px;
+border:none;
+outline:none;
+border-radius:12px;
+padding:12px;
+font-size:18px;
+resize:none;
+}
+
+button{
+width:100%;
+margin-top:10px;
+padding:12px;
+border:none;
+border-radius:12px;
+background:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+.progress{
+height:10px;
+background:rgba(255,255,255,0.2);
+border-radius:10px;
+margin-top:10px;
+overflow:hidden;
+}
+
+.bar{
+height:100%;
+width:0%;
+background:#22c55e;
+transition:0.2s;
+}
+
+/* keyboard */
+.keyboard{
+margin-top:15px;
+text-align:center;
+}
+
+.row{
+display:flex;
+justify-content:center;
+gap:5px;
+margin-top:5px;
+flex-wrap:wrap;
+}
+
+.key{
+padding:6px 10px;
+background:rgba(255,255,255,0.15);
+border-radius:6px;
+min-width:30px;
+transition:0.2s;
+}
+
+.active{
+background:#22c55e !important;
+color:black;
+transform:scale(1.2);
+}
+
+/* LIGHT MODE */
+body.light{
+background:linear-gradient(135deg,#e2e8f0,#cbd5e1);
+color:#111;
+}
+
+body.light .container{
+background:rgba(255,255,255,0.7);
+color:#111;
+}
+
+body.light .text{
+background:rgba(255,255,255,0.9);
+color:#111;
+}
+
+body.light .key{
+background:rgba(0,0,0,0.1);
+color:#111;
+}
+
+body.light .active{
+background:#16a34a !important;
+color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>⌨️ Typing Trainer</h1>
+
+<button id="themeBtn" onclick="toggleTheme()">🌙 Dark Mode</button>
+
+<div class="stats">
+<div>⚡ WPM: <span id="wpm">0</span></div>
+<div>🎯 Akurasi: <span id="acc">100</span>%</div>
+<div>⏳ Time: <span id="time">60</span>s</div>
+</div>
+
+<div class="progress">
+<div class="bar" id="bar"></div>
+</div>
+
+<div class="text" id="text"></div>
+
+<textarea id="input" placeholder="Mulai mengetik..."></textarea>
+
+<button onclick="resetGame()">🔄 Reset</button>
+
+<div class="keyboard">
+<div class="row" id="row1"></div>
+<div class="row" id="row2"></div>
+<div class="row" id="row3"></div>
+</div>
+
+</div>
+
+<script>
+const words = [
+"belajar","komputer","teknologi","internet","keyboard",
+"laptop","coding","program","aplikasi","sistem",
+"data","server","jaringan","digital","android",
+"web","cloud","game","sekolah","fotografi"
+];
+
+let text = "";
+let timer = 60;
+let started = false;
+let interval;
+
+const input = document.getElementById("input");
+
+const keys1 = "QWERTYUIOP".split("");
+const keys2 = "ASDFGHJKL".split("");
+const keys3 = "ZXCVBNM".split("");
+
+function renderKeyboard(){
+document.getElementById("row1").innerHTML =
+keys1.map(k=>`<div class="key" id="k-${k}">${k}</div>`).join("");
+
+document.getElementById("row2").innerHTML =
+keys2.map(k=>`<div class="key" id="k-${k}">${k}</div>`).join("");
+
+document.getElementById("row3").innerHTML =
+keys3.map(k=>`<div class="key" id="k-${k}">${k}</div>`).join("");
+}
+
+function generateText(){
+text = "";
+for(let i=0;i<40;i++){
+text += words[Math.floor(Math.random()*words.length)] + " ";
+}
+showText();
+}
+
+function showText(){
+let typed = input.value;
+let html = "";
+
+for(let i=0;i<text.length;i++){
+if(i < typed.length){
+html += typed[i] === text[i]
+? `<span class="correct">${text[i]}</span>`
+: `<span class="wrong">${text[i]}</span>`;
+}
+else if(i === typed.length){
+html += `<span class="current">${text[i]}</span>`;
+}
+else html += text[i];
+}
+
+document.getElementById("text").innerHTML = html;
+updateStats();
+}
+
+function updateStats(){
+let typed = input.value;
+
+let correct = 0;
+for(let i=0;i<typed.length;i++){
+if(typed[i] === text[i]) correct++;
+}
+
+let acc = typed.length ? Math.round(correct/typed.length*100) : 100;
+document.getElementById("acc").innerText = acc;
+
+let wordsTyped = typed.trim().split(" ").length;
+let wpm = Math.round(wordsTyped * (60/(60-timer || 1)));
+document.getElementById("wpm").innerText = isFinite(wpm)?wpm:0;
+
+let progress = (typed.length/text.length)*100;
+document.getElementById("bar").style.width = progress + "%";
+}
+
+function highlightKey(key){
+document.querySelectorAll(".key").forEach(k=>k.classList.remove("active"));
+let el = document.getElementById("k-"+key.toUpperCase());
+if(el) el.classList.add("active");
+}
+
+input.addEventListener("input",()=>{
+if(!started){
+started = true;
+interval = setInterval(()=>{
+timer--;
+document.getElementById("time").innerText = timer;
+
+if(timer<=0){
+clearInterval(interval);
+input.disabled = true;
+}
+},1000);
+}
+
+showText();
+highlightKey(input.value.slice(-1));
+});
+
+function resetGame(){
+clearInterval(interval);
+timer = 60;
+started = false;
+input.disabled = false;
+input.value = "";
+document.getElementById("time").innerText = timer;
+generateText();
+}
+
+function toggleTheme(){
+document.body.classList.toggle("light");
+
+let btn = document.getElementById("themeBtn");
+
+if(document.body.classList.contains("light")){
+btn.innerText = "☀️ Light Mode";
+localStorage.setItem("theme","light");
+}else{
+btn.innerText = "🌙 Dark Mode";
+localStorage.setItem("theme","dark");
+}
+}
+
+window.onload = () => {
+renderKeyboard();
+generateText();
+
+let saved = localStorage.getItem("theme");
+if(saved === "light"){
+document.body.classList.add("light");
+document.getElementById("themeBtn").innerText = "☀️ Light Mode";
+}
+};
+</script>
+
+</body>
+</html>
